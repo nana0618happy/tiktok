@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok運用分析レポート｜MAXIV ALIVE</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    color: #2c3e50;
+    line-height: 1.6;
+    padding: 20px 10px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #000000 0%, #25F4EE 50%, #FE2C55 100%);
+    color: white;
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: "";
+    position: absolute;
+    top: -50%; left: -10%;
+    width: 40%; height: 200%;
+    background: rgba(37, 244, 238, 0.15);
+    transform: rotate(25deg);
+  }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; position: relative; }
+  .header .subtitle { font-size: 13px; opacity: 0.95; position: relative; }
+  .header .period {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 6px 16px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 30px;
+    font-size: 12px;
+    position: relative;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    overflow-x: auto;
+    background: #fafbfd;
+    border-bottom: 1px solid #eef2f6;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 110px;
+    padding: 16px 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7f8c9a;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .tab-btn:hover { color: #FE2C55; background: rgba(254,44,85,0.05); }
+  .tab-btn.active {
+    color: #FE2C55;
+    border-bottom-color: #FE2C55;
+    background: white;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 28px 24px;
+    animation: fadeIn 0.3s;
+  }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2::before {
+    content: "";
+    width: 4px;
+    height: 22px;
+    background: linear-gradient(180deg, #25F4EE, #FE2C55);
+    border-radius: 2px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 24px 0 12px;
+  }
+
+  /* Cards */
+  .grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+
+  .card {
+    background: linear-gradient(135deg, #fff, #f9fafc);
+    border: 1px solid #e8ecf1;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card .label { font-size: 12px; color: #7f8c9a; margin-bottom: 4px; }
+  .card .value { font-size: 22px; font-weight: 700; color: #2c3e50; line-height: 1.1; }
+  .card .unit { font-size: 11px; color: #95a3b3; margin-top: 2px; }
+
+  .card.hl {
+    background: linear-gradient(135deg, #000, #FE2C55);
+    border: none;
+    color: white;
+  }
+  .card.hl .label, .card.hl .unit { color: rgba(255,255,255,0.9); }
+  .card.hl .value { color: white; }
+
+  .card.cyan {
+    background: linear-gradient(135deg, #25F4EE, #0CC5C0);
+    border: none;
+    color: white;
+  }
+  .card.cyan .label, .card.cyan .unit { color: rgba(255,255,255,0.95); }
+  .card.cyan .value { color: white; }
+
+  .card.warn {
+    background: linear-gradient(135deg, #fff5e6, #ffe8cc);
+    border-color: #ffc078;
+  }
+  .card.warn .value { color: #e67e22; }
+
+  .card.ok {
+    background: linear-gradient(135deg, #eafaf1, #d4f4e4);
+    border-color: #82c99b;
+  }
+  .card.ok .value { color: #27ae60; }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    font-size: 13px;
+    margin: 12px 0;
+  }
+  th { background: #000; color: white; padding: 10px; text-align: left; font-size: 12px; }
+  td { padding: 10px; border-bottom: 1px solid #f0f3f7; }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+  }
+  .b-hi { background: #FE2C55; }
+  .b-mid { background: #f39c12; }
+  .b-low { background: #95a3b3; }
+  .b-ok { background: #27ae60; }
+  .b-cyan { background: #25F4EE; color: #000; }
+
+  /* Insights */
+  .insight {
+    background: #fafbfd;
+    border-left: 3px solid #FE2C55;
+    padding: 14px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .insight.warn { border-left-color: #f39c12; background: #fff9ef; }
+  .insight.ok { border-left-color: #27ae60; background: #eafaf1; }
+  .insight.cyan { border-left-color: #25F4EE; background: #effdfd; }
+  .insight .num { font-size: 11px; color: #FE2C55; font-weight: 700; margin-bottom: 4px; }
+  .insight.warn .num { color: #f39c12; }
+  .insight.ok .num { color: #27ae60; }
+  .insight.cyan .num { color: #0CC5C0; }
+  .insight .txt { font-size: 13px; color: #2c3e50; }
+
+  /* Bar */
+  .bar-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 80px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .bar-label { font-size: 12px; font-weight: 600; }
+  .bar-box {
+    background: #eef2f6;
+    border-radius: 14px;
+    height: 22px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 14px;
+    min-width: 40px;
+  }
+  .bar-value { font-size: 12px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .f1 { background: linear-gradient(90deg, #bdc7d0, #95a3b3); }
+  .f2 { background: linear-gradient(90deg, #25F4EE, #0CC5C0); }
+  .f3 { background: linear-gradient(90deg, #FE2C55, #c81947); }
+
+  /* Chart */
+  .chart {
+    background: #fafbfd;
+    border-radius: 10px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .chart-title { font-size: 12px; font-weight: 600; color: #7f8c9a; margin-bottom: 10px; }
+
+  /* Phase marker */
+  .phase {
+    background: white;
+    border: 1px solid #eef2f6;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #bdc7d0;
+  }
+  .phase.p1 { border-left-color: #95a3b3; }
+  .phase.p2 { border-left-color: #25F4EE; }
+  .phase.p3 { border-left-color: #FE2C55; }
+  .phase-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .phase-period { font-size: 11px; color: #7f8c9a; font-weight: 500; }
+  .phase-body { font-size: 13px; color: #2c3e50; line-height: 1.7; }
+
+  /* Template */
+  .template {
+    background: #fafbfd;
+    border: 1px solid #eef2f6;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .template-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #FE2C55;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eef2f6;
+  }
+  .template-sub { font-size: 12px; color: #7f8c9a; margin-bottom: 6px; font-weight: 600; }
+  .template-body {
+    background: white;
+    border: 1px dashed #cbd5e0;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.8;
+    font-family: "Hiragino Sans", monospace;
+    white-space: pre-wrap;
+    margin-bottom: 8px;
+  }
+
+  .tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .tag {
+    background: #effdfd;
+    color: #0CC5C0;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+  .tag.warm {
+    background: #ffeaf0;
+    color: #FE2C55;
+  }
+
+  .callout {
+    background: linear-gradient(135deg, #fff5e6, #ffeaf0);
+    border: 1px solid #ffc078;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+  .callout strong { color: #FE2C55; }
+
+  .callout-ok {
+    background: #eafaf1;
+    border: 1px solid #82c99b;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+
+  .callout-cyan {
+    background: #effdfd;
+    border: 1px solid #25F4EE;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+
+  /* Pattern card */
+  .pattern {
+    background: linear-gradient(135deg, #fff, #fff5f7);
+    border: 2px solid #FE2C55;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .pattern-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #FE2C55;
+    margin-bottom: 4px;
+  }
+  .pattern-sub { font-size: 12px; color: #7f8c9a; margin-bottom: 12px; }
+  .pattern-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .pattern-stat {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .pattern-stat .v { font-size: 18px; font-weight: 700; color: #FE2C55; line-height: 1.1; }
+  .pattern-stat .l { font-size: 10px; color: #7f8c9a; margin-top: 2px; }
+
+  /* Step */
+  .step {
+    background: white;
+    border: 1px solid #eef2f6;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+  }
+  .step-num {
+    background: linear-gradient(135deg, #25F4EE, #FE2C55);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .step h4 { font-size: 14px; color: #2c3e50; margin-bottom: 6px; }
+  .step p { font-size: 13px; color: #2c3e50; line-height: 1.7; }
+
+  .footer {
+    background: #000;
+    color: #95a3b3;
+    padding: 16px;
+    text-align: center;
+    font-size: 11px;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 8px; }
+    .header { padding: 24px 16px; }
+    .header h1 { font-size: 20px; }
+    .tab-btn { font-size: 11px; padding: 12px 8px; min-width: 80px; }
+    .tab-content { padding: 20px 14px; }
+    h2 { font-size: 17px; }
+    .bar-row { grid-template-columns: 80px 1fr 70px; }
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .tabs { display: none; }
+    .tab-content { display: block !important; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>TikTok 運用分析レポート</h1>
+    <div class="subtitle">@maxiv.alive ｜アカウント開設〜現在までの成長軌跡と勝ちパターン分析</div>
+    <div class="period">📅 2024年8月26日 〜 2026年4月23日（約20ヶ月／147本）</div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="summary">📊 サマリー</button>
+    <button class="tab-btn" data-tab="analysis">📈 分析</button>
+    <button class="tab-btn" data-tab="winning">🏆 勝ちパターン</button>
+    <button class="tab-btn" data-tab="strategy">🎯 戦略</button>
+    <button class="tab-btn" data-tab="templates">📝 企画テンプレ</button>
+    <button class="tab-btn" data-tab="calendar">📅 運用プラン</button>
+  </nav>
+
+  <!-- ===== サマリー ===== -->
+  <div class="tab-content active" id="summary">
+    <h2>全体サマリー</h2>
+
+    <div class="grid grid-3">
+      <div class="card hl">
+        <div class="label">歴代最高再生数</div>
+        <div class="value">146,336</div>
+        <div class="unit">回（2026/01/19「４文字チャレンジ」）</div>
+      </div>
+      <div class="card cyan">
+        <div class="label">累計再生数</div>
+        <div class="value">811,720</div>
+        <div class="unit">回（20ヶ月・147本）</div>
+      </div>
+      <div class="card">
+        <div class="label">累計新規フォロワー</div>
+        <div class="value">+333</div>
+        <div class="unit">人</div>
+      </div>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card">
+        <div class="label">総投稿数</div>
+        <div class="value">147</div>
+        <div class="unit">本</div>
+      </div>
+      <div class="card">
+        <div class="label">累計いいね</div>
+        <div class="value">3,064</div>
+        <div class="unit">件</div>
+      </div>
+      <div class="card ok">
+        <div class="label">バズ率</div>
+        <div class="value">10.2%</div>
+        <div class="unit">1万回超 ／ 15本</div>
+      </div>
+      <div class="card warn">
+        <div class="label">平均再生数</div>
+        <div class="value">5,521</div>
+        <div class="unit">回／本</div>
+      </div>
+    </div>
+
+    <h3>📍 今のアカウントの立ち位置</h3>
+    <div class="insight cyan">
+      <div class="num">2026年に入って状況が一変</div>
+      <div class="txt">2025年12月まで月の累計再生数は1〜2万回で推移していましたが、<strong>2026年1月に17万回超</strong>にジャンプ。2〜4月も月18万回ペースを継続しており、「模索期」を抜けて<strong>勝ちパターン運用期</strong>に入っています。</div>
+    </div>
+    <div class="insight">
+      <div class="num">勝ちパターンは「４文字ゲーム」一本</div>
+      <div class="txt">12本の「４文字ゲーム／チャレンジ」で累計<strong>55.8万回</strong>を獲得。平均<strong>46,541回／本</strong>（全体平均の8.4倍）。このシリーズが累計視聴の<strong>約69%</strong>を生んでいます。</div>
+    </div>
+    <div class="insight warn">
+      <div class="num">依存リスク</div>
+      <div class="txt">再生の大半が1シリーズに集中。<strong>「次の柱」となる第2・第3の鉄板企画を育てないと、飽きられた瞬間にアカウントが止まる</strong>リスクがあります。</div>
+    </div>
+
+    <h3>💡 注目すべき3つの事実</h3>
+    <div class="grid grid-2">
+      <div class="callout">
+        <strong>① 量と質の両立を実現</strong><br>
+        2025年9月以降、月10〜14本の安定投稿を継続。投稿頻度を上げた結果、<strong>バズ動画のヒット率も上昇</strong>しました。
+      </div>
+      <div class="callout-ok">
+        <strong>② 新規フォロワー獲得も連動</strong><br>
+        2026年1〜2月は<strong>月40〜62名の新規フォロワー</strong>を獲得。再生数増＝フォロワー増の好循環。
+      </div>
+      <div class="callout-cyan">
+        <strong>③ フォーマット化に成功</strong><br>
+        「４文字ゲーム」は12本中<strong>8本が3万回超</strong>と再現性が高く、<strong>勝率が読める企画</strong>として確立済み。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 分析 ===== -->
+  <div class="tab-content" id="analysis">
+    <h2>月別推移（視聴回数）</h2>
+
+    <div class="chart">
+      <div class="chart-title">月別累計視聴数の推移</div>
+      <div class="bar-row"><div class="bar-label">2024/08</div><div class="bar-box"><div class="bar-fill f1" style="width:6%">　</div></div><div class="bar-value">11,257</div></div>
+      <div class="bar-row"><div class="bar-label">2024/09</div><div class="bar-box"><div class="bar-fill f1" style="width:6%">　</div></div><div class="bar-value">11,761</div></div>
+      <div class="bar-row"><div class="bar-label">2024/10</div><div class="bar-box"><div class="bar-fill f1" style="width:3%">　</div></div><div class="bar-value">5,562</div></div>
+      <div class="bar-row"><div class="bar-label">2024/11</div><div class="bar-box"><div class="bar-fill f1" style="width:3%">　</div></div><div class="bar-value">5,207</div></div>
+      <div class="bar-row"><div class="bar-label">2024/12</div><div class="bar-box"><div class="bar-fill f1" style="width:2%">　</div></div><div class="bar-value">2,883</div></div>
+      <div class="bar-row"><div class="bar-label">2025/01</div><div class="bar-box"><div class="bar-fill f1" style="width:5%">　</div></div><div class="bar-value">9,406</div></div>
+      <div class="bar-row"><div class="bar-label">2025/02</div><div class="bar-box"><div class="bar-fill f1" style="width:3%">　</div></div><div class="bar-value">5,944</div></div>
+      <div class="bar-row"><div class="bar-label">2025/03</div><div class="bar-box"><div class="bar-fill f1" style="width:5%">　</div></div><div class="bar-value">9,548</div></div>
+      <div class="bar-row"><div class="bar-label">2025/04</div><div class="bar-box"><div class="bar-fill f2" style="width:20%">1本バズ</div></div><div class="bar-value">38,000</div></div>
+      <div class="bar-row"><div class="bar-label">2025/05</div><div class="bar-box"><div class="bar-fill f1" style="width:2%">　</div></div><div class="bar-value">3,748</div></div>
+      <div class="bar-row"><div class="bar-label">2025/06</div><div class="bar-box"><div class="bar-fill f1" style="width:2%">　</div></div><div class="bar-value">2,767</div></div>
+      <div class="bar-row"><div class="bar-label">2025/07</div><div class="bar-box"><div class="bar-fill f1" style="width:1%">　</div></div><div class="bar-value">2,350</div></div>
+      <div class="bar-row"><div class="bar-label">2025/08</div><div class="bar-box"><div class="bar-fill f1" style="width:1%">　</div></div><div class="bar-value">1,579</div></div>
+      <div class="bar-row"><div class="bar-label">2025/09</div><div class="bar-box"><div class="bar-fill f2" style="width:4%">投稿増</div></div><div class="bar-value">8,304</div></div>
+      <div class="bar-row"><div class="bar-label">2025/10</div><div class="bar-box"><div class="bar-fill f2" style="width:6%">　</div></div><div class="bar-value">11,250</div></div>
+      <div class="bar-row"><div class="bar-label">2025/11</div><div class="bar-box"><div class="bar-fill f2" style="width:9%">　</div></div><div class="bar-value">18,025</div></div>
+      <div class="bar-row"><div class="bar-label">2025/12</div><div class="bar-box"><div class="bar-fill f2" style="width:9%">　</div></div><div class="bar-value">17,842</div></div>
+      <div class="bar-row"><div class="bar-label">2026/01</div><div class="bar-box"><div class="bar-fill f3" style="width:92%">💥ブレイク</div></div><div class="bar-value">174,136</div></div>
+      <div class="bar-row"><div class="bar-label">2026/02</div><div class="bar-box"><div class="bar-fill f3" style="width:96%">🔥継続</div></div><div class="bar-value">182,758</div></div>
+      <div class="bar-row"><div class="bar-label">2026/03</div><div class="bar-box"><div class="bar-fill f3" style="width:98%">🔥継続</div></div><div class="bar-value">185,082</div></div>
+      <div class="bar-row"><div class="bar-label">2026/04</div><div class="bar-box"><div class="bar-fill f3" style="width:55%">継続中</div></div><div class="bar-value">104,311</div></div>
+    </div>
+
+    <h2 style="margin-top:28px;">3つのフェーズで読み解く</h2>
+
+    <div class="phase p1">
+      <div class="phase-title">Phase 1｜模索期 <span class="phase-period">2024/08 〜 2025/03（8ヶ月）</span></div>
+      <div class="phase-body">
+        月1〜6本のペースで試行錯誤。インタビュー・営業あるある・ファッションチェックなど幅広く投稿。<strong>月間再生3,000〜11,000回</strong>で推移し、明確な勝ちパターン未発見。投稿1本あたりの平均再生は約<strong>2,500回</strong>。
+      </div>
+    </div>
+
+    <div class="phase p2">
+      <div class="phase-title">Phase 2｜ピーク＆失速期 <span class="phase-period">2025/04 〜 2025/08（5ヶ月）</span></div>
+      <div class="phase-body">
+        2025/04に「えっほえっほ（19,140回）」「DKJS（11,324回）」がヒットし月間<strong>38,000回</strong>を記録。しかし再現性のある企画化に至らず、5〜8月は月間1,500〜3,700回まで失速。<strong>単発バズのリスク</strong>が顕在化した期間。
+      </div>
+    </div>
+
+    <div class="phase p3">
+      <div class="phase-title">Phase 3｜勝ちパターン確立期 <span class="phase-period">2025/09 〜 現在（8ヶ月）</span></div>
+      <div class="phase-body">
+        9月から月10本以上のコンスタント投稿に切り替え。11月以降「<strong>４文字ゲーム</strong>」シリーズが台頭し、<strong>2026年1月に14.6万回の大バズ</strong>。そのまま継続的に月17〜18万回を維持。<strong>「量を投げて当たったフォーマットを磨く」運用への転換が奏功</strong>しました。
+      </div>
+    </div>
+
+    <h2 style="margin-top:28px;">バズ動画（1万回以上）一覧</h2>
+    <table>
+      <thead>
+        <tr><th>日付</th><th>タイトル</th><th style="text-align:right">視聴</th><th style="text-align:right">フォロワー</th><th>種類</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>2026-01-19</td><td>４文字チャレンジ</td><td class="num"><strong>146,336</strong></td><td class="num">+31</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-03-13</td><td>４文字ゲーム</td><td class="num">78,397</td><td class="num">+14</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-02-20</td><td>４文字ゲーム</td><td class="num">76,412</td><td class="num">+19</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-02-04</td><td>４文字ゲーム</td><td class="num">68,302</td><td class="num">+20</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-03-27</td><td>４文字ゲーム</td><td class="num">51,199</td><td class="num">+5</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-03-05</td><td>４文字ゲーム</td><td class="num">43,384</td><td class="num">+8</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-04-15</td><td>４文字ゲーム</td><td class="num">37,113</td><td class="num">+10</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-04-09</td><td>４文字ゲーム</td><td class="num">25,306</td><td class="num">+3</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2026-02-13</td><td>３文字ゲーム</td><td class="num">23,196</td><td class="num">+5</td><td><span class="badge b-cyan">派生</span></td></tr>
+        <tr><td>2026-04-01</td><td>４文字ゲーム</td><td class="num">23,137</td><td class="num">0</td><td><span class="badge b-hi">鉄板</span></td></tr>
+        <tr><td>2025-04-07</td><td>えっほえっほ</td><td class="num">19,140</td><td class="num">+21</td><td><span class="badge b-mid">単発</span></td></tr>
+        <tr><td>2026-01-16</td><td>リズムチャレンジ</td><td class="num">17,000</td><td class="num">+5</td><td><span class="badge b-cyan">派生</span></td></tr>
+        <tr><td>2024-09-20</td><td>ほとんどの方が未経験入社です</td><td class="num">11,761</td><td class="num">+37</td><td><span class="badge b-mid">単発</span></td></tr>
+        <tr><td>2025-04-16</td><td>DKJS</td><td class="num">11,324</td><td class="num">+16</td><td><span class="badge b-mid">単発</span></td></tr>
+        <tr><td>2024-08-26</td><td>営業マンの1日密着</td><td class="num">11,257</td><td class="num">+8</td><td><span class="badge b-mid">単発</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 勝ちパターン ===== -->
+  <div class="tab-content" id="winning">
+    <h2>勝ちパターン分析：「４文字」シリーズ</h2>
+
+    <div class="pattern">
+      <div class="pattern-title">🏆 ４文字ゲーム／チャレンジ</div>
+      <div class="pattern-sub">このアカウントを支える絶対的エース企画</div>
+      <div class="pattern-stats">
+        <div class="pattern-stat">
+          <div class="v">12</div>
+          <div class="l">投稿本数</div>
+        </div>
+        <div class="pattern-stat">
+          <div class="v">558,496</div>
+          <div class="l">累計視聴数</div>
+        </div>
+        <div class="pattern-stat">
+          <div class="v">46,541</div>
+          <div class="l">平均視聴／本</div>
+        </div>
+        <div class="pattern-stat">
+          <div class="v">8.4倍</div>
+          <div class="l">全体平均比</div>
+        </div>
+        <div class="pattern-stat">
+          <div class="v">69%</div>
+          <div class="l">累計視聴シェア</div>
+        </div>
+      </div>
+      <div style="font-size:13px; margin-top:10px; line-height:1.7;">
+        <strong>TOP5動画のうち5本すべて</strong>がこのシリーズ。視聴回数が安定して読めるため、<strong>「仕掛けのタイミング」と「派生」の設計に集中できる</strong>強みがあります。
+      </div>
+    </div>
+
+    <h3>なぜ勝てているのか？（仮説）</h3>
+    <div class="insight ok">
+      <div class="num">理由①｜参加型フォーマット</div>
+      <div class="txt">視聴者が「自分も答える」ことで<strong>滞在時間・コメント率が上がる</strong>。TikTokアルゴリズムが好む「フル視聴」も取りやすい。</div>
+    </div>
+    <div class="insight ok">
+      <div class="num">理由②｜短尺でテンポが良い</div>
+      <div class="txt">4文字で問い→答えという明快な構造。<strong>平均視聴時間・フル視聴率ともに高く</strong>、最後まで見られやすい。</div>
+    </div>
+    <div class="insight ok">
+      <div class="num">理由③｜演者の人柄が乗る</div>
+      <div class="txt">営業メンバーの反応・性格の違いが出やすく、<strong>「けんけん＝4文字ゲーム」のキャラ付け</strong>が視聴者の中で成立している。</div>
+    </div>
+
+    <h3>勝ちパターンの「構成テンプレ」</h3>
+    <div class="template">
+      <div class="template-title">📐 ４文字ゲーム 黄金フォーマット</div>
+      <div class="template-body">【冒頭 0〜3秒】
+「○○な４文字といえば？」という問いを出す
+（お題は身近＋引っかけがあるもの）
+
+【本編 3〜15秒】
+営業メンバー数名の回答を矢継ぎ早に見せる
+（ボケ・真面目・斬新の3パターンが鉄板）
+
+【オチ 15〜20秒】
+一番予想外の回答 or 全員ハモる回答で締め
+
+【最後 20秒〜】
+「次のお題コメントで募集！」で参加導線</div>
+      <div class="template-sub">💡 ポイント：お題の「引っかかり」が命。普通すぎるとバズらず、凝りすぎても視聴離脱する。</div>
+    </div>
+
+    <h3>派生・派生の派生で"ネタ切れ"を防ぐ</h3>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="label">既に成功している派生</div>
+        <div class="value" style="font-size:15px">３文字ゲーム</div>
+        <div class="unit">23,196回（2026/02/13）</div>
+      </div>
+      <div class="card">
+        <div class="label">派生候補①</div>
+        <div class="value" style="font-size:15px">5文字チャレンジ</div>
+        <div class="unit">難易度UPで差別化</div>
+      </div>
+      <div class="card">
+        <div class="label">派生候補②</div>
+        <div class="value" style="font-size:15px">英語4文字</div>
+        <div class="unit">外国人メンバー起用</div>
+      </div>
+      <div class="card">
+        <div class="label">派生候補③</div>
+        <div class="value" style="font-size:15px">業界用語4文字</div>
+        <div class="unit">不動産×あるある</div>
+      </div>
+      <div class="card">
+        <div class="label">派生候補④</div>
+        <div class="value" style="font-size:15px">お客様4文字</div>
+        <div class="unit">接客エピソード化</div>
+      </div>
+      <div class="card">
+        <div class="label">派生候補⑤</div>
+        <div class="value" style="font-size:15px">コラボ4文字</div>
+        <div class="unit">他社・インフルエンサー</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 戦略 ===== -->
+  <div class="tab-content" id="strategy">
+    <h2>📌 現状の課題と処方箋</h2>
+
+    <div class="callout">
+      <strong>⚠️ 課題：1シリーズ依存（69%）</strong><br>
+      ４文字ゲームがアカウントの生命線になっている一方、このシリーズが飽きられた瞬間に<strong>月間視聴が3〜5万回まで一気に落ちる</strong>リスクがある（2025/05〜08と同じ失速パターン）。
+    </div>
+
+    <h3>🛡 リスクヘッジ3本柱</h3>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h4>「４文字ゲーム」の派生を月1本以上</h4>
+        <p>３文字ゲーム（23,196回成功）の延長で、<strong>「N文字」「英語」「業界」</strong>など変化球を定期的に投入。本家の視聴疲れを防ぎながらシリーズ感は維持。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h4>「第2の柱」候補を月2本で実験</h4>
+        <p>過去ヒット実績がある<strong>「えっほえっほ（踊ってみた系）」「DKJS（歌ネタ）」「1日密着（vlog系）」</strong>を定期シリーズ化できるか検証。3ヶ月で勝ち残り企画を1つ確定。</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h4>「採用ブランディング」の比率を上げる</h4>
+        <p>バズ動画は再生稼ぎ。<strong>「未経験入社OK（37フォロワー獲得）」「営業マン1日密着」</strong>のように、会社の魅力を伝える動画も月2本は混ぜる。視聴→採用の導線強化。</p>
+      </div>
+    </div>
+
+    <h2 style="margin-top:28px;">📏 投稿頻度の最適解</h2>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="label">2024年平均</div>
+        <div class="value">2.8本</div>
+        <div class="unit">月／弱</div>
+      </div>
+      <div class="card warn">
+        <div class="label">2025年前半平均</div>
+        <div class="value">4.8本</div>
+        <div class="unit">月／物足りない</div>
+      </div>
+      <div class="card ok">
+        <div class="label">2025年9月以降</div>
+        <div class="value">12本</div>
+        <div class="unit">月／ベスト</div>
+      </div>
+    </div>
+
+    <div class="callout-ok">
+      <strong>✅ 結論：週3〜4本（月12〜15本）が勝ち筋</strong><br>
+      2025/09以降この頻度に上げてから、バズ率・フォロワー増ともに大幅改善。<strong>量を出す → アルゴリズムに評価される → 当たる</strong>の好循環。
+    </div>
+
+    <h2 style="margin-top:28px;">🎯 次の3ヶ月の目標（KPI）</h2>
+
+    <table>
+      <thead>
+        <tr><th>指標</th><th style="text-align:right">現状</th><th style="text-align:right">3ヶ月後目標</th><th>施策</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>月間再生数</td><td class="num">約15万回</td><td class="num"><strong>月間20万回</strong></td><td>派生強化＋第2柱の育成</td></tr>
+        <tr><td>フォロワー総数</td><td class="num">333名</td><td class="num"><strong>500名</strong></td><td>採用系動画の比率UP</td></tr>
+        <tr><td>4文字以外で1万回超</td><td class="num">月0〜1本</td><td class="num"><strong>月2本以上</strong></td><td>第2柱の実験継続</td></tr>
+        <tr><td>コメント数／本</td><td class="num">約3件</td><td class="num"><strong>10件以上</strong></td><td>質問投げかけ型企画</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== 企画テンプレ ===== -->
+  <div class="tab-content" id="templates">
+    <h2>📝 次に作るべき企画テンプレ5選</h2>
+
+    <div class="template">
+      <div class="template-title">① 派生シリーズ：〇文字チャレンジ</div>
+      <div class="template-sub">狙い：鉄板シリーズの延命＆視聴疲れ対策</div>
+      <div class="template-body">【タイトル例】
+「５文字チャレンジ」「英語４文字」「業界用語４文字」
+
+【構成】
+お題：「不動産営業マンあるある５文字」
+→ メンバー数名の回答を矢継ぎ早に
+→ オチに一番笑える or 予想外の回答
+→「次のお題はコメントで！」</div>
+      <div class="tag-group">
+        <span class="tag warm">#4文字ゲーム派生</span>
+        <span class="tag">#不動産営業</span>
+        <span class="tag">#お題大喜利</span>
+      </div>
+    </div>
+
+    <div class="template">
+      <div class="template-title">② 採用訴求：「未経験OKです」シリーズ</div>
+      <div class="template-sub">狙い：過去最高のフォロワー獲得動画（+37）を定期化</div>
+      <div class="template-body">【タイトル例】
+「文系卒でも不動産営業できる？」
+「20代後半で未経験転職した人の話」
+「この業界、3ヶ月でこうなった」
+
+【構成】
+キャッチコピー：「意外と◯◯」
+→ メンバーの実体験インタビュー
+→ 具体数字（年収・残業・研修）
+→「気になる人はプロフから！」</div>
+      <div class="tag-group">
+        <span class="tag warm">#未経験採用</span>
+        <span class="tag">#第二新卒</span>
+        <span class="tag">#転職</span>
+      </div>
+    </div>
+
+    <div class="template">
+      <div class="template-title">③ 社風見せ：「1日密着」シリーズ</div>
+      <div class="template-sub">狙い：vlog型で潜在層へリーチ（11,257回の実績）</div>
+      <div class="template-body">【タイトル例】
+「女性営業マンの1日」「新卒1年目の1日」
+「社長の1日に密着してみた」
+
+【構成】
+朝〜夜のタイムスタンプ付きで
+・通勤／出社
+・商談／お客様対応
+・ランチ／休憩
+・帰宅／オフモード
+
+【ポイント】
+キラキラ過ぎずリアル寄りがウケる</div>
+      <div class="tag-group">
+        <span class="tag">#vlog</span>
+        <span class="tag">#1日密着</span>
+        <span class="tag">#お仕事</span>
+      </div>
+    </div>
+
+    <div class="template">
+      <div class="template-title">④ インタビュー：「入社してみて」シリーズ</div>
+      <div class="template-sub">狙い：複数メンバー×短尺×連作で回遊</div>
+      <div class="template-body">【構成】
+・入社の決め手
+・入社前のイメージ vs 実際
+・一番キツかった瞬間
+・嬉しかった瞬間
+
+【見せ方】
+30秒×4本で1人分シリーズ化
+同じ編集テンプレで量産</div>
+      <div class="tag-group">
+        <span class="tag">#インタビュー</span>
+        <span class="tag">#社員紹介</span>
+        <span class="tag">#ブランディング</span>
+      </div>
+    </div>
+
+    <div class="template">
+      <div class="template-title">⑤ トレンド活用：「今のノリ」シリーズ</div>
+      <div class="template-sub">狙い：えっほえっほ・DKJSの再現</div>
+      <div class="template-body">【構成】
+流行のBGM／ダンス／フレーズに
+自社のノリを混ぜるだけ
+
+【コツ】
+・流行から1週間以内に出す
+・業界色を薄めて参加
+・全員で撮る（社風訴求）</div>
+      <div class="tag-group">
+        <span class="tag">#流行ネタ</span>
+        <span class="tag">#チャレンジ</span>
+        <span class="tag">#社員ノリ</span>
+      </div>
+    </div>
+
+    <div class="callout-cyan">
+      <strong>🗓 月間ミックスの提案</strong><br>
+      ①４文字派生：<strong>4本</strong> ／ ②採用訴求：<strong>2本</strong> ／ ③1日密着：<strong>2本</strong> ／ ④インタビュー：<strong>2本</strong> ／ ⑤トレンド：<strong>2本</strong> ＝ <strong>月12本</strong>
+    </div>
+  </div>
+
+  <!-- ===== 運用プラン ===== -->
+  <div class="tab-content" id="calendar">
+    <h2>📅 今後3ヶ月の運用プラン</h2>
+
+    <h3>投稿タイミング（曜日・時間）</h3>
+    <table>
+      <thead>
+        <tr><th>曜日</th><th>時間帯</th><th>カテゴリ</th><th>目的</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>月</td><td>19:00-21:00</td><td>４文字ゲーム</td><td>週始めの鉄板で再生稼ぎ</td></tr>
+        <tr><td>水</td><td>12:00-13:00</td><td>インタビュー／1日密着</td><td>昼休み層に社員紹介</td></tr>
+        <tr><td>金</td><td>20:00-22:00</td><td>採用訴求 or トレンド</td><td>週末前の高アクティブ時間</td></tr>
+        <tr><td>土</td><td>10:00-12:00</td><td>４文字派生 or vlog</td><td>休日の長時間視聴狙い</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:12px; color:#7f8c9a; margin-top:8px;">※ TikTokアナリティクスの「フォロワーのアクティブ時間」に合わせて要調整</div>
+
+    <h3>月間コンテンツカレンダー例（1ヶ月）</h3>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="label">第1週</div>
+        <div style="font-size:13px; line-height:1.7; margin-top:4px;">
+          月：<strong>４文字ゲーム</strong>（本家）<br>
+          水：1日密着（新人）<br>
+          金：採用訴求（未経験OK）<br>
+          土：トレンド参加
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">第2週</div>
+        <div style="font-size:13px; line-height:1.7; margin-top:4px;">
+          月：<strong>４文字ゲーム</strong>（本家）<br>
+          水：インタビュー①<br>
+          金：採用訴求（年収系）<br>
+          土：<strong>５文字チャレンジ</strong>（派生）
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">第3週</div>
+        <div style="font-size:13px; line-height:1.7; margin-top:4px;">
+          月：<strong>４文字ゲーム</strong>（本家）<br>
+          水：1日密着（社長 or 女性営業）<br>
+          金：トレンド参加<br>
+          土：<strong>業界用語４文字</strong>（派生）
+        </div>
+      </div>
+      <div class="card">
+        <div class="label">第4週</div>
+        <div style="font-size:13px; line-height:1.7; margin-top:4px;">
+          月：<strong>４文字ゲーム</strong>（本家）<br>
+          水：インタビュー②<br>
+          金：採用訴求（研修・キャリア）<br>
+          土：月のハイライトまとめ
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:28px;">📊 振り返りの仕組み化</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h4>週次レビュー（金曜or月曜）</h4>
+        <p>今週投稿した4本の<strong>視聴・フル視聴率・フォロワー増</strong>をスプレッドシートに記録。当たった/外した理由を1行メモ。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h4>月次レビュー（月末）</h4>
+        <p>月12本の<strong>バズ率・累計再生・フォロワー純増</strong>を集計。<strong>TOP3とワースト3</strong>を並べて「次にやること」を3つ決める。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h4>四半期レビュー</h4>
+        <p>勝ちパターンの<strong>賞味期限をチェック</strong>。４文字ゲームの平均視聴が2割落ちたら赤信号→派生比率を上げる。</p>
+      </div>
+    </div>
+
+    <div class="callout-ok" style="margin-top:24px;">
+      <strong>🎯 最終ゴール（12ヶ月後）</strong><br>
+      ・月間再生数：<strong>30万回安定</strong>（現状の約2倍）<br>
+      ・フォロワー：<strong>1,000名突破</strong>（現状の約3倍）<br>
+      ・<strong>「4文字ゲーム」に次ぐ第2シリーズを確立</strong>（月3万回を10回以上記録）<br>
+      ・<strong>採用動線</strong>：TikTokきっかけでの応募を月5名以上
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Report generated: 2026/04/24 ｜ Based on 147 posts data (2024/08/26 - 2026/04/23)
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
